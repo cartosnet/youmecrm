@@ -1,0 +1,103 @@
+.profile-details
+  .pfl-detail-blk
+    - con_name = @lead.contact_info["name"].present? ? @lead.contact_info["name"][0].upcase : @lead.contact_info["email"].present? ? @lead.contact_info["email"][0].upcase : "NA"
+    - contact = @lead.deals_contacts.first.contactable
+    - if contact.present? && contact.image.present?
+      .big-profile-img
+        = image_tag contact.image.image.url(:small)
+    - else
+      .lead-profile-icon.big-profile-icon{:style => "background:#{@lead.get_color_code(con_name.downcase)}"}
+        = con_name
+    %h6
+      = @lead.title
+    %span
+      = @lead.country_id.present? ? Country.find(@lead.country_id).name : "NA"
+    .change-pfl-icon
+      - if !@lead.assigned_to.nil?
+        - user = User.find_by_id(@lead.assigned_to)
+        - assn_user_id = user.id if user
+        - assn_user = user.first_name.present? ? user.first_name : user.email if user
+      - else
+        - assn_user_id = 'null'
+      .dropdown
+        %span.cwkp-sprite.more-option.dropdown-toggle{"data-toggle" => "dropdown"}
+        %ul.edit_list_content.dropdown-menu.edit-icon-in-ll
+          %li
+            %a{"data-toggle" => "modal", href: "#taskModal", rel: "tooltip", title: "Add a Task",onclick: "$('#task_referrer').val('Kanban View');task_deal(#{@lead.id})", "data-id" => @lead.id} 
+              %span.add_i_deal
+              %span Add Task
+          %li
+            %a{"data-target" => "#noteModal", "data-toggle" => "modal", href: "javascript:",  onclick: "$('#notable_id').val(#{@lead.id});$('#notable_type').val('Deal');"} 
+              %span.add_i_note
+              %span Add Note
+          %li
+            %a{"data-target" => "#SendEmailModal", "data-toggle" => "modal", href: "javascript:",onclick: "$('#to').val("");$('#mailer_id').val(#{@lead.id});$('#mailer_type').val('Deal');"} 
+              %span.glyphicon.glyphicon-envelope
+              %span Send Email
+          %li
+            %a{href: edit_lead_path(@lead.id)} 
+              %span.glyphicon.glyphicon-edit
+              %span Edit
+          %li
+            =link_to "leads/#{@lead.id}", method: "delete", data: { id: @lead.id }, :confirm => "Are you sure?" do
+              %span.glyphicon.glyphicon-trash
+              %span Delete
+          - deal_status = DealStatus.where(@lead.deal_status_id).first
+          - if deal_status.present? && deal_status.name != "Won"
+            %li                        
+              %a.movedealincomepop{"data-toggle" => "modal", href: "#dealmoveModal", rel: "popup", title: "Move Lead",onclick: "move_deal(#{@lead.id},#{assn_user_id})", "data-id" => @lead.id}
+                %span.add_i_move
+                %span  Move Lead
+      / %a{href: "javascript:void(0)", onclick: "addAttachmentToLead(#{@lead.id})", "data-target" => "#AddLeadAttachmentLead", "data-toggle" => "modal"}  
+      /   %span.cwkp-sprite.add-attachment
+      %a{"data-target" => "#SendEmailModal", "data-toggle" => "modal", href: "javascript:void(0)",onclick: "$('#to').val("");$('#mailer_id').val(#{@lead.id});$('#mailer_type').val('Deal');"}  
+        %span.cwkp-sprite.send-email
+      %a{href: "leads/#{@lead.id}/edit"}  
+        %span.cwkp-sprite.edit-lead
+      =link_to "leads/#{@lead.id}", method: "delete", :confirm => "Are you sure?", data: { id: @lead.id } do 
+        %span.cwkp-sprite.delete-lead
+    = link_to "leads/#{@lead.id}" do
+      .clr-user-icon.cwkp-sprite.contact-icon
+  .pfl-table
+    %table
+      %tr
+        %td
+          %strong Nickname:
+        %td 
+          = @lead.contact_info["name"].present? ? @lead.contact_info["name"] : "NA" 
+      %tr
+        %td
+          %strong Tel:
+        %td 
+          = @lead.contact_info["phone"].present? ? @lead.contact_info["phone"] : "NA"
+      %tr
+        %td
+          %strong Language:
+        %td English
+
+
+/ Attachment Lead modal
+#AddLeadAttachmentLead.modal.fade{"aria-hidden" => "true", "aria-labelledby" => "AddLeadAttachmentLead", role: "dialog", tabindex: "-1"}        
+  .modal-dialog
+    .modal-content
+      .modal-header
+        %button.close{"aria-hidden" => "true", type: "button", "data-dismiss" => "modal"} ×
+        %h4.modal-title Attached Lead
+      .modal-body
+:javascript
+  function addAttachmentToLead(id){
+    $("#AddLeadAttachmentLead .modal-body").html("<img src='/assets/ajax-loader2.gif'/>");
+    $.ajax({
+      url: "/add_attchment_to_lead",
+      data: {id: id},
+      success: function(data){ 
+        alert("Success.");
+        $("#AddLeadAttachmentLead .modal-body").html(data);
+        $("#task_loader").hide();
+      },
+      error: function(data){
+        alert('Got an error while changing priority.');
+      }
+    });
+  }
+

@@ -1,0 +1,80 @@
+#ImportContactModal.modal.fade{"aria-hidden" => "true", role: "dialog", tabindex: "-1"}
+  .modal-dialog.cstm-material-modal
+    .modal-content
+      = form_tag("",method: "post",:multipart => true, class: "import_contact_form") do
+        .modal-header
+          %button.close{"aria-hidden" => "true", type: "button", "data-dismiss" => "modal"} x
+          %h4.modal-title Import Contact
+          .download_sample_csv{style: "display:none"}
+            %p
+              We are supporting csv file import. Here is a sample csv format we are supporting.
+            %p
+              Click Here to Download
+              %a{href: "http://wakeupsales.com/contact.csv", download: "contact.csv", style: "text-decoration:underline;"} 
+                Sample CSV
+        .modal-body
+          .row{:style => "margin-bottom:-35px;"}
+            .form-group.col-md-12
+              .choose_crm
+                .col-md-6
+                  %span  
+                    %input{:checked => "checked", :name => "choose_crm", :onclick => "open_crm_modal('sugar_crm');show_crm_radio();", :type => "radio", style: "width: auto;display: inline-block;"}
+                  %span  
+                    = label_tag 'Sugar CRM'
+
+                .col-md-6
+                  %span
+                    %input{:name => "choose_crm", :onclick => "open_crm_modal('fatfree_crm');show_crm_radio();", :type => "radio", style: "width: auto;display: inline-block;"}
+                  %span  
+                    = label_tag 'Fatfree CRM'
+
+                .col-md-6
+                  %span  
+                    %input{ :name => "choose_crm", :onclick => "open_crm_modal('zoho_crm');show_crm_radio();", :type => "radio", style: "width: auto;display: inline-block;"}
+                  %span  
+                    = label_tag 'Zoho CRM'
+
+                .col-md-6
+                  %span  
+                    %input{ :name => "choose_crm", :onclick => "open_crm_modal('other_crm');show_crm_radio();", :type => "radio", style: "width: auto;display: inline-block;"}
+                  %span  
+                    = label_tag 'Other CRM'
+
+              = file_field_tag "attachment_lead", :class => "form-control", :required => true, style: "height: auto;"
+              = hidden_field_tag "ref_site"
+        .modal-footer{:style => "padding-bottom:16px;border:1px solid #ddd;"}
+          .pull-right{:style => "margin-top:10px"}
+            =submit_tag "Submit", :class=>"btn btn-primary btn-large", :disable_with => "Submitting....", :id => "submit_beta_user", :onclick=> "return chk_validemail('beta_account_email')"  
+
+:javascript
+  function open_crm_modal(crm_name){
+    $(".choose_crm").hide();
+    if(crm_name == "zoho_crm"){
+      $("#ImportContactModal .modal-title").html("Import Contact From Zoho CRM");
+      $("#ref_site").val("http://www.zohocrm.com");
+      $(".import_contact_form").attr("action","/import_contact_from_zoho_crm");
+      $(".download_sample_csv").hide();
+    }
+    if(crm_name == "sugar_crm"){
+      $("#ImportContactModal .modal-title").html("Import Contact From Sugar CRM");
+      $("#ref_site").val("http://www.sugarcrm.com");
+      $(".import_contact_form").attr("action","/import_contact_from_sugar_crm");
+      $(".download_sample_csv").hide();
+    }
+    if(crm_name == "fatfree_crm"){
+      $("#ImportContactModal .modal-title").html("Import Contact From Fatfree CRM");
+      $("#ref_site").val("http://www.fatfreecrm.com");
+      $(".import_contact_form").attr("action","/import_contact_from_fatfree_crm");
+      $(".download_sample_csv").hide();
+    }
+    if(crm_name == "other_crm"){
+      $("#ImportContactModal .modal-title").html("Import Contact From Other CRM");
+      $("#ref_site").val("Others");
+      $(".import_contact_form").attr("action","/import_contact_from_other_crm");
+      $(".download_sample_csv").show();
+    }
+  }
+
+  function show_crm_radio(){
+     $(".choose_crm").show(); 
+  }

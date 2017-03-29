@@ -1,0 +1,348 @@
+:css
+  .right-container{
+    padding-top: 85px;
+  }
+.custom_right_padding
+%span.glyphicon.glyphicon-option-vertical
+.container
+  .top-list-bar.white-sticky-header.fixed-in-app-header{style: "padding-top: 22px;padding-left: 35px;"}
+    %span{style: "margin-top:5px"}  
+      %span.navigation_sec
+        %a{href: "/leads"}
+          Leads
+        ="/"
+      %span.curr_page_name
+        Users
+  .row
+    .proj_grid.m-cmn-flow
+      .user_div_bk.usrs_page.m-list-tbl
+        - @users.each do |user|
+          .col-md-4          
+            .usr_mcnt.cmn_bdr_shadow
+              .usr_top_cnt
+                .usr_act_det.fr
+                  %span.dropdown
+                    %a.dropdown-toggle.active{"data-target" => "#", "data-toggle" => "dropdown", :href => "javascript:void(0);"}
+                      .user-action-sprite.vertical-icon
+                      /%i.material-icons 
+                    %ul.dropdown-menu.right0.user-actions
+                      %li
+                        %a.icon-assign-usr{"data-usr-id" => "#{user.id}", "data-usr-name" => "#{user.full_name}", :href=>"javascript:void(0)", :onclick => "assign_deal_to_user('#{user.id}')"}
+                          .user-action-sprite.assign_deal
+                          Assign Lead
+                      %li
+                        %a.icon-remprj-usr{"data-usr-id" => "#{user.id}", "data-usr-name" => "#{user.full_name}", :href=>"javascript:void(0)", :onclick => "remove_lead('#{user.id}')"}
+                          .user-action-sprite.remove_deal
+                          Remove Lead
+                      - if user.admin_type.present? && @current_user.id != user.id  
+                        %li
+                          %a#block_div{"data-usr-id" => "block_#{user.id}", "data-usr-name" => "#{user.full_name}", :href=>"javascript:void(0)", :onclick => "block_unblock_user('#{user.id}', '#{user.is_blocked ? "unblock" : "block"}')"}
+                            .user-action-sprite.block
+                            = user.is_blocked ? "Unblock" : "Block"
+                        %li
+                          %a#admin_div{"data-usr-id" => "grant_revoke_#{user.id}", "data-usr-name" => "#{user.full_name}", :href=>"javascript:void(0)", :onclick => "grant_revoke_admin('#{user.id}', '#{user.is_admin? ? "revoke" : "grant"}')"}
+                            .user-action-sprite.grant
+                            = user.is_admin? ? "Revoke Admin" : "Grant Admin"
+                      %li
+                        %a.edit-exist-usr{"data-usr-id" => "#{user.id}", "data-usr-name" => "#{user.full_name}", :href=>"javascript:void(0)", :onclick => "edit_user('#{user.id}')"}
+                          .user-action-sprite.profile
+                          Edit Profile
+                .user-pfimg-name
+                  %ul
+                    %li
+                      - if user.first_name.present?
+                        - user_color = user.get_user_color_code(user.first_name.downcase[0])
+                      - else
+                        - user_color = user.get_user_color_code(user.email.downcase[0])
+                      .user_img{:style => "background: #{user_color} !important"}
+                        - if user.image.present?
+                          = image_tag user.image.image.url(:thumb)
+                        - else
+                          %span.name_txt
+                            = user.first_name.present? ? user.first_name[0] : user.email[0]
+                      %h3#pn_11.invite_user_cls
+                        = user.full_name.present? ? user.full_name : user.email.split("@")[0]
+                      .email-txt
+                        = user.email
+                      %span#psn_11
+                        = user.first_name.present? ? user.first_name[0,3].upcase  : user.email[0,3].upcase
+                      |
+                      - if user.admin_type.nil?
+                        %span.user-role-type.owner-clr{:class=> "user_type_#{user.id}"}
+                          Owner
+                      - elsif user.is_admin?
+                        %span.user-role-type.admin-clr{:class=> "user_type_#{user.id}"}
+                          Admin
+                      - elsif user.admin_type == 3
+                        %span.user-role-type.user-clr{:class=> "user_type_#{user.id}"}
+                          User
+                    
+              .usr_cnts
+                %ul
+                  /%li
+                  /  %b Created:
+                  /  = user.created_at.strftime("%b %d, %Y %H:%M:%S")
+                  /%li
+                  /  %b Leads:
+                  /  = user.all_assigned_deal.present? ? user.all_assigned_deal.map{|column| column.title}.map(&:inspect).join(",").gsub('"','').truncate(30, omission: '...') : "NA"
+                  %li
+                    .lead-task-blk
+                      .fl.leads-tasks-count
+                        %strong Leads
+                        = user.all_assigned_deal.count
+                      .fl.leads-tasks-count
+                        %strong Tasks
+                        = user.all_tasks_assigned.count
+                      .fr.leads-tasks-count
+                        %strong Activities
+                        = user.activities.count
+                      .cb
+              .fr.user_added_on
+                Added on: 
+                = user.created_at.strftime("%b %d, %Y %H:%M:%S")
+= hidden_field_tag "hdn_assign_deals"
+= hidden_field_tag "hdn_unassign_deals"
+#assign_leadModal.modal.fade{"aria-hidden" => "true", "aria-labelledby" => "assignLeadModal", role: "dialog", tabindex: "-1"}
+  .modal-dialog{:style => "width: 1050px;"}
+    .modal-content
+      .modal-header
+        %button.close{"aria-hidden" => "true", type: "button", "data-dismiss" => "modal"} ×
+        %h4.modal-title Assign Lead(s)
+      .modal-body
+        #assign_content{style: "margin-left: 12px;"}
+#unassign_leadModal.modal.fade{"aria-hidden" => "true", "aria-labelledby" => "removeLeadModal", role: "dialog", tabindex: "-1"}
+  .modal-dialog
+    .modal-content
+      .modal-header
+        %button.close{"aria-hidden" => "true", type: "button", "data-dismiss" => "modal"} ×
+        %h4.modal-title Remove Lead(s)
+      .modal-body
+        #unassign_content{style: "margin-left: 12px;"}
+#editUserModal.modal.fade{"aria-hidden" => "true", "aria-labelledby" => "editUserModal", role: "dialog", tabindex: "-1"}
+  .modal-dialog.cstm-material-modal
+    .modal-content
+      .modal-header
+        %button.close{"aria-hidden" => "true", type: "button", "data-dismiss" => "modal"} ×
+        %h4.modal-title Edit User
+      .modal-body
+        #user_content{style: "margin-left: 12px;"}
+:javascript
+  $(document).ready(function(){
+  $('a[rel="tooltip"],i,input:checkbox,button,div,span').powerTip({smartPlacement: true,fadeInTime: 100,fadeOutTime: 200});
+  $('#user_edit_form').bind('ajax:success', function(evt, data, status, xhr){
+  alert('success')
+  $('#task_loader').hide();
+  $("#editUserModal").modal('hide');
+  window.location.href ="/users";
+  });
+
+  $('#user_edit_form').bind('ajax:before', function(evt, data, status, xhr){
+  alert('before')
+  $('#task_loader').show();
+  });
+
+  $("#user_edit_form").bind("ajax:complete", function(evt, data, status, xhr) {
+  //alert('complete')
+  if(data.responseText !== " "){
+  $("#alert-msg").show();
+  $("#msg_div").html(data.responseText);
+  }
+  $('#task_loader').hide();
+  });
+  // $.ajax({
+  //     type: "POST",
+  //     url: "get_source_list" ,
+  //     success: function(result) {
+  //       $("#source_list").html(result);
+  //       $('a[rel="tooltip"],i,input:checkbox,button,div,span').powerTip({smartPlacement: true,fadeInTime: 100,fadeOutTime: 200});
+  //     }
+  //   });
+  // $.ajax({
+  //     type: "POST",
+  //     url: "get_industry_list",
+  //     success: function(result) {
+  //       $("#industry_list").html(result);
+  //       $('a').powerTip({smartPlacement: true,fadeInTime: 100,fadeOutTime: 200});
+  //     }
+  //   });
+    
+  })
+  $( "li.li-contacts" ).hover(
+    function() {
+      $(this).children("div.actions").show();
+    }, function() {
+      $(this).children("div.actions").hide();
+    }
+  );
+  function change_button()
+  {
+  $("#btn_usr_add").html('<a class="btn btn-primary" data-toggle="modal" href="#inviteuserModal" rel="tooltip" style="float:right;padding:3px;margin:4px;"><span class="icon-plus-sign"></span> Invite User</a>');
+  }
+  function  update_assign_lead(user_id){
+    var assign_deals = $('#hdn_assign_deals').val();
+    var unassign_deals = $('#hdn_unassign_deals').val();
+    var user_id = user_id;
+    $.ajax({
+      type: "POST",
+      url: "assign_unassign_deals",
+      data: {unassign_deal_ids: unassign_deals, assign_deal_ids: assign_deals, user_id: user_id},
+      beforeSend: function(){
+        $("#task_loader").show();
+      },
+      success: function(result) {
+        $('#task_loader').hide();
+        $("#assign_leadModal").modal("hide");
+        $("#unassign_leadModal").modal("hide");
+      }
+    });
+  }
+
+  function assign_deal_to_user(id){
+    $.ajax({
+      type: "POST",
+      url: "/assign_deal_to_user",
+      dataType: 'json',
+      async: false,
+      data: {user_id: id},
+      beforeSend: function(){
+        $("#task_loader").show();
+      },
+      success: function(data)
+      {
+      },
+      error: function(data) {
+        $("#task_loader").hide();
+      },
+      complete: function(data) {
+        $("#assign_leadModal").modal("show");
+        $("#assign_content").html(data.responseText);
+        $("#task_loader").hide();
+      }
+    });
+  }
+
+  function remove_lead(id){
+    $.ajax({
+      type: "POST",
+      url: "/remove_lead",
+      dataType: 'json',
+      async: false,
+      data: {user_id: id},
+      beforeSend: function(){
+        $("#task_loader").show();
+      },
+      success: function(data)
+      {
+      },
+      error: function(data) {
+        $("#task_loader").hide();
+      },
+      complete: function(data) {
+        $("#unassign_leadModal").modal("show");
+        $("#unassign_content").html(data.responseText);
+        $("#task_loader").hide();
+      }
+    });
+  }
+
+  function edit_user(id){
+    $.ajax({
+      type: "POST",
+      url: "/edit_user",
+      dataType: 'json',
+      async: false,
+      data: {user_id: id},
+      beforeSend: function(){
+        $("#task_loader").show();
+      },
+      success: function(data)
+      {
+      },
+      error: function(data) {
+        $("#task_loader").hide();
+      },
+      complete: function(data) {
+        $("#editUserModal").modal("show");
+        $("#user_content").html(data.responseText);
+        $("#task_loader").hide();
+        $('form input[type="text"].bfh-phone, form input[type="phone"].bfh-phone, span.bfh-phone').each(function () {
+          var $phone = $(this);
+          $phone.bfhphone($phone.data());
+        });
+      }
+    });
+  }
+
+  function block_unblock_user(id, type){
+    if(confirm('Are you sure?')){
+      $.ajax({
+        type: "POST",
+        url: "/block_unblock_user",
+        dataType: 'json',
+        async: false,
+        data: {user_id: id, type: type},
+        beforeSend: function(){
+          $("#task_loader").show();
+        },
+        success: function(data)
+        {
+        },
+        error: function(data) {
+          $("#task_loader").hide();
+        },
+        complete: function(data) {
+          var json = JSON.parse(data.responseText);
+          $("#task_loader").hide();
+          if(type=="block"){
+            var txt= "Unblock";
+            var act = "unblock";            
+          }else{
+            var txt= "Block";
+            var act = "unblock";
+          }
+          $('a#block_div').attr('onclick',"grant_revoke_admin('" + json['user_id'] + "','" + act + "')" ).html("<div class='user-action-sprite block'></div>" + txt);
+        }
+      });
+    }
+  }
+  function grant_revoke_admin(id, type){
+    if(confirm('Are you sure?')){
+      $.ajax({
+        type: "POST",
+        url: "/grant_revoke_admin",
+        dataType: 'json',
+        async: false,
+        data: {user_id: id, type: type},
+        beforeSend: function(){
+          $("#task_loader").show();
+        },
+        success: function(data)
+        {
+        },
+        error: function(data) {
+          $("#task_loader").hide();
+        },
+        complete: function(data) {
+          var json = JSON.parse(data.responseText);
+          $("#task_loader").hide();
+          if(type=="grant"){
+            var txt= "Revoke admin";
+            var act = "revoke";
+            var nm = "Admin";
+            var remove_cls="user-clr";
+            var add_cls="admin-clr";
+          }else{
+            var txt= "Grant admin";
+            var act = "grant";
+            var nm = "User";
+            var remove_cls="admin-clr";
+            var add_cls="user-clr";
+          }
+          $('a#admin_div').attr('onclick',"grant_revoke_admin('" + json['user_id'] + "','" + act + "')" ).html("<div class='user-action-sprite grant block'></div>" + txt);
+          $(".user_type_"+id).removeClass(remove_cls).addClass(add_cls).html(nm);
+        }
+      });
+    }
+  }
+/= render :partial => "shared/source"
+/= render :partial => "shared/industry"  

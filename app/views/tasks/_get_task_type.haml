@@ -1,0 +1,27 @@
+=hidden_field_tag "old_task_type",params[:task_type_name]
+=hidden_field_tag "task_id",params[:task_id]
+- @task_types.each do |task_type| 
+  %li{onclick: "change_task_type(#{task_type.id},'#{task_type.name}')", style: "cursor:pointer;padding-left: 10px;"}
+    %span
+      = task_type.name
+  %li.divider
+
+:javascript
+  function change_task_type(task_type_id,task_type_name){
+    var old_task_type=$("#old_task_type").val();
+    var task_id = $("#task_id").val();
+    $.ajax({
+      type: "GET",
+      url: "/change_task_type",
+      data: {task_id: task_id,task_type_id: task_type_id},
+      success: function(data)
+      {
+        $(".task_"+task_id).html(data);
+        $(".labelTaskType.task_"+task_id).removeClass("label"+old_task_type);
+        $(".labelTaskType.task_"+task_id).addClass("label"+task_type_name);
+      },
+      error: function(data) {
+        alert("Got an Error.!!!");
+      }
+    });
+  }
