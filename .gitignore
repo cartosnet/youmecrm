@@ -4,7 +4,6 @@ tmp/**/*
 log/*
 .bundle/install.log
 #config/database.yml
-#Gemfile.lock
 config/initializers/sidekiq.rb
 
 ## generic files to ignore
